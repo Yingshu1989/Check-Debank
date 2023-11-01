@@ -1,0 +1,69 @@
+process.setMaxListeners(50); // 增加最大监听器数量，这里设置为 15，根据需要调整
+
+const puppeteer = require('puppeteer');
+const cheerio = require('cheerio');
+
+// 定义要爬取的多个地址
+const addresses = [
+'https://debank.com/profile/0xbbbc35dfac3a00a03a8fde3540eca4f0e15c5e64/stream',
+'https://debank.com/profile/0x41bc7d0687e6cea57fa26da78379dfdc5627c56d/stream',
+'https://debank.com/profile/0x614d98a57a5d879d717152de0690ed2b04562ade/stream',
+'https://debank.com/profile/0xbdc149340cc73b38aebde5f67bae146a1af9e0d6/stream',
+'https://debank.com/profile/0x5c7a3f26697f960534a77ba33365efa98fbb13b0/stream',
+'https://debank.com/profile/0x7ac34681f6aaeb691e150c43ee494177c0e2c183/stream',
+'https://debank.com/profile/0x0172e05392aba65366c4dbbb70d958bbf43304e4/stream',
+'https://debank.com/profile/0xf7b10d603907658f690da534e9b7dbc4dab3e2d6/stream',
+'https://debank.com/profile/0x11d67fa925877813b744abc0917900c2b1d6eb81/stream',
+'https://debank.com/profile/0x0b32aa5c1e71715206fe29b7badb21ad95f272c0/stream',
+'https://debank.com/profile/0x3ec6732676db7996c1b34e64b0503f941025cb63/stream',
+'https://debank.com/profile/0x0edefa91e99da1eddd1372c1743a63b1595fc413/stream',
+'https://debank.com/profile/0xd310a932cb1db29cdeff5a7b6fc34ac7b4f0ed8c/stream',
+'https://debank.com/profile/0x6cd68e8f04490cd1a5a21cc97cc8bc15b47dc9eb/stream'
+];
+
+async function scrapeWebsite(url) {
+  try {
+    // 启动 Puppeteer 浏览器
+    const browser = await puppeteer.launch({ headless: "new" });
+    const page = await browser.newPage();
+
+    // 跳转到网页
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 }); // 设置超时时间为 60 秒
+
+
+    // 使用waitForSelector等待元素出现，可以根据实际情况调整选择器
+    const selector = '.RichTextView_articleContent__2tMQD';
+    await page.waitForSelector(selector);
+
+    // 获取页面内容
+    const pageContent = await page.content();
+
+    // 关闭浏览器
+    await browser.close();
+
+    // 使用cheerio来处理页面内容
+    const $ = cheerio.load(pageContent);
+
+    // 使用选择器定位包含最新内容的元素
+    const latestContentElement = $(selector);
+
+    // 提取最新内容的文本
+    const latestContent = latestContentElement.text();
+
+    // 查找包含"friend"的文本
+    if (latestContent.includes('friend')) {
+      console.log(`地址 ${url} 的最新内容包含"friend":`, latestContent);
+    } 
+    console.log('\n');
+
+    // 提取其他信息...
+
+  } catch (error) {
+    console.error(`地址 ${url} 发生错误:`, error);
+  }
+}
+
+// 遍历地址数组并依次爬取内容
+for (const address of addresses) {
+  scrapeWebsite(address);
+}
